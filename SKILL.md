@@ -1,9 +1,9 @@
 ---
-name: pdf-to-editable-pptx
+name: svg-pdf-to-pptx-vsdx
 description: Convert SVG diagrams and vector PDFs into editable PowerPoint (.pptx) slides or Visio (.vsdx) drawings. Use for flowcharts and scientific figures that need native shapes, connectors, text, bitmap images, or a reconstruction audit.
 ---
 
-# SVG / PDF 转可编辑 PowerPoint 或 Visio
+# SVG / PDF → 可编辑 PPTX / VSDX
 
 ## 使用
 
@@ -15,13 +15,13 @@ python scripts/convert.py "graph.svg" -o "graph_editable.vsdx"
 python scripts/convert.py "figure.pdf" -o "figure_editable.pptx"
 ```
 
-将整个仓库作为 `pdf-to-editable-pptx` 子目录放在宿主的技能目录中，保留 `SKILL.md`、`requirements.txt` 和 `scripts/` 的相对位置。也可直接使用命令行。由代理调用时，使用已安装目录内脚本的绝对路径，输入和输出路径相对于用户工作目录解析。
+将整个仓库作为 `svg-pdf-to-pptx-vsdx` 子目录放在宿主的技能目录中，保留 `SKILL.md`、`requirements.txt` 和 `scripts/` 的相对位置。也可直接使用命令行。由代理调用时，使用已安装目录内脚本的绝对路径，输入和输出路径相对于用户工作目录解析。
 
 | 宿主 | 项目内的安装目录 |
 | --- | --- |
-| Claude Code | `.claude/skills/pdf-to-editable-pptx/` |
-| DeepSeek Harness | `.dsh/skills/pdf-to-editable-pptx/` 或 `.agents/skills/pdf-to-editable-pptx/`，启用 skill 和 skill-filesystem 扩展 |
-| Antigravity | `.agents/skills/pdf-to-editable-pptx/` |
+| Claude Code | `.claude/skills/svg-pdf-to-pptx-vsdx/` |
+| DeepSeek Harness | `.dsh/skills/svg-pdf-to-pptx-vsdx/` 或 `.agents/skills/svg-pdf-to-pptx-vsdx/`，启用 skill 和 skill-filesystem 扩展 |
+| Antigravity | `.agents/skills/svg-pdf-to-pptx-vsdx/` |
 
 ## 转换与核对
 
