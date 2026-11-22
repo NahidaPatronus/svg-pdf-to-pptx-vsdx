@@ -1,4 +1,4 @@
-"""Convert an SVG or vector PDF to an editable PowerPoint presentation."""
+"""Convert an SVG or vector PDF to an editable PPTX or Visio VSDX."""
 
 import argparse
 from collections import Counter
@@ -48,7 +48,7 @@ def connect(edges, nodes):
     return linked
 
 
-def process(slide, page, bind):
+def process(slide, page, bind, office_math=True):
     counts = Counter()
     edges = []
     nodes = []
@@ -71,7 +71,11 @@ def process(slide, page, bind):
                 chunks = [parts] if owner is not None else split_unmarked(parts)
                 for chunk in chunks:
                     shapes, mode = add_label(
-                        slide, chunk, accents, owner is None or not mixed, containers
+                        slide,
+                        chunk,
+                        accents,
+                        office_math and (owner is None or not mixed),
+                        containers,
                     )
                     label = "".join(
                         accents.get((g.data["font"], g.data["cid"]), g.data["s"])
@@ -183,27 +187,36 @@ def split_unmarked(items):
 
 
 def convert(source, dest, bind=True):
+    out_format = Path(dest).suffix.lower()
     if (
-        Path(dest).suffix.lower() != ".pptx"
+        out_format not in (".pptx", ".vsdx")
         or Path(source).resolve() == Path(dest).resolve()
     ):
-        raise ValueError("Choose a separate .pptx output path.")
+        raise ValueError("Choose a separate .pptx or .vsdx output path.")
     deck = Presentation()
     report = []
+    sizes = []
     suffix = Path(source).suffix.lower()
     if suffix == ".svg":
         from svg_input import svg_slide
 
-        report.append(svg_slide(deck, source, connect if bind else None))
+        report.append(
+            svg_slide(
+                deck, source, connect if bind else None, fit_pptx=out_format == ".pptx"
+            )
+        )
+        sizes.append(tuple(Pt(v) for v in report[-1]["page_size_pt"]))
     elif suffix == ".pdf":
         for index, page in enumerate(read_pages(source)):
             size = Pt(page.width), Pt(page.height)
-            if index == 0:
-                deck.slide_width, deck.slide_height = size
-            elif size != (deck.slide_width, deck.slide_height):
-                raise ValueError("Mixed page sizes need separate decks.")
+            sizes.append(size)
+            if out_format == ".pptx":
+                if index == 0:
+                    deck.slide_width, deck.slide_height = size
+                elif size != (deck.slide_width, deck.slide_height):
+                    raise ValueError("Mixed page sizes need separate PowerPoint decks.")
             slide = deck.slides.add_slide(deck.slide_layouts[6])
-            report.append(process(slide, page, bind))
+            report.append(process(slide, page, bind, office_math=out_format == ".pptx"))
     else:
         raise ValueError("Choose an .svg or .pdf source file.")
     if not report:
@@ -211,11 +224,16 @@ def convert(source, dest, bind=True):
     dest = Path(dest)
     dest.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(
-        dir=dest.parent, suffix=".pptx", delete=False
+        dir=dest.parent, suffix=out_format, delete=False
     ) as tmp:
         path = tmp.name
     try:
-        deck.save(path)
+        if out_format == ".vsdx":
+            from visio_output import write_vsdx
+
+            write_vsdx(deck, path, report, sizes)
+        else:
+            deck.save(path)
         os.replace(path, dest)
     finally:
         Path(path).unlink(missing_ok=True)

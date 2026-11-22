@@ -289,7 +289,7 @@ class SVGSlide:
         raise ValueError(f"Unsupported SVG element <{kind}>")
 
 
-def svg_slide(deck, source, bind_edges):
+def svg_slide(deck, source, bind_edges, fit_pptx=True):
     root = ET.parse(
         str(source),
         ET.XMLParser(resolve_entities=False, no_network=True, remove_comments=True),
@@ -300,9 +300,11 @@ def svg_slide(deck, source, bind_edges):
     w, h = page.width * 0.75, page.height * 0.75
     if min(w, h) <= 0:
         raise ValueError("SVG slide dimensions must be positive.")
-    scale = min(max(1, 72 / min(w, h)), 4032 / max(w, h))
-    sw, sh = max(72, w * scale), max(72, h * scale)
-    deck.slide_width, deck.slide_height = Pt(sw), Pt(sh)
+    scale, sw, sh = 1, w, h
+    if fit_pptx:
+        scale = min(max(1, 72 / min(w, h)), 4032 / max(w, h))
+        sw, sh = max(72, w * scale), max(72, h * scale)
+        deck.slide_width, deck.slide_height = Pt(sw), Pt(sh)
     if scale != 1 or sw != w or sh != h:
         page.warnings.add("SVG fitted uniformly to PowerPoint slide-size limits.")
     page.slide = deck.slides.add_slide(deck.slide_layouts[6])
@@ -318,6 +320,7 @@ def svg_slide(deck, source, bind_edges):
         raise ValueError("The SVG contains no visible objects")
     return dict(
         format="svg",
+        page_size_pt=[sw, sh],
         objects=dict(page.counts),
         detail=page.detail,
         bound_arrows=bind_edges(page.edges, page.nodes) if bind_edges else [],
