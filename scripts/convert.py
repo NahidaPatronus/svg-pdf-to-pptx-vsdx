@@ -76,6 +76,7 @@ def process(slide, page, bind, office_math=True):
                         accents,
                         office_math and (owner is None or not mixed),
                         containers,
+                        visio=not office_math,
                     )
                     label = "".join(
                         accents.get((g.data["font"], g.data["cid"]), g.data["s"])

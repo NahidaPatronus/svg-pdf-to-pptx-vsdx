@@ -6,7 +6,7 @@ from pptx.enum.text import MSO_ANCHOR, MSO_AUTO_SIZE, PP_ALIGN
 from pptx.dml.color import RGBColor
 from pptx.oxml.ns import qn
 from geometry import avg
-from math_text import elem, math_content, A14
+from math_text import elem, math_content, visio_accent, A14, VISIO_FONT_SCALE, VISIO_MATH_ASCENT
 
 
 def family(name):
@@ -62,7 +62,7 @@ def lines_of(glyphs):
     return lines
 
 
-def add_line(slide, chars):
+def add_line(slide, chars, visio=False):
     first = chars[0]
     size = max(g["size"] for g in chars)
     origin = first["x"], first["y"]
@@ -76,7 +76,10 @@ def add_line(slide, chars):
     )
     height = 1.35 * size
     width = max(0.1, width + size * 0.28)
-    offset = (0.94 if family(first["font"]) == "Cambria Math" else 0.905) * size
+    ascent = 0.905
+    if family(first["font"]) == "Cambria Math":
+        ascent = VISIO_MATH_ASCENT if visio else 0.94
+    offset = ascent * size
     # Rotate the text frame about its center while holding the PDF baseline fixed.
     center = (
         origin[0] + u[0] * width / 2 - u[1] * (height / 2 - offset),
@@ -93,6 +96,8 @@ def add_line(slide, chars):
         run = para.add_run()
         run.text = "".join(g["s"] for g in gs)
         style_run(run, gs[0])
+        if "font_scale" in gs[0]:
+            run._r.get_or_add_rPr().set(VISIO_FONT_SCALE, str(gs[0]["font_scale"]))
     return shape
 
 
@@ -151,7 +156,7 @@ def equation_frame(glyphs, local, containers, size):
     return cx - w / 2, cy - h / 2, w, h
 
 
-def add_label(slide, items, accents, allow_math, containers):
+def add_label(slide, items, accents, allow_math, containers, visio=False):
     glyphs = [i.data for i in items]
     local = equation_coordinates(glyphs) if allow_math else None
     usable = math_content(local, accents) if local else None
@@ -183,9 +188,15 @@ def add_label(slide, items, accents, allow_math, containers):
             )
             for g in glyphs
         ]
-    lines = lines_of(glyphs)
+    if visio:
+        glyphs = [visio_accent(g) for g in glyphs]
+    # A positioned accent has an independent origin and character width.
+    # Keep its text field inside the same editable equation group as the base.
+    lines = []
+    for is_accent, run in groupby(glyphs, key=lambda g: "font_scale" in g):
+        lines.extend(([g] for g in run) if is_accent else lines_of(run))
     shapes = [
-        add_line(slide, line) for line in lines if any(c["s"].strip() for c in line)
+        add_line(slide, line, visio) for line in lines if any(c["s"].strip() for c in line)
     ]
     return shapes, (
         "positioned math text"

@@ -11,6 +11,46 @@ M = "http://schemas.openxmlformats.org/officeDocument/2006/math"
 A = "http://schemas.openxmlformats.org/drawingml/2006/main"
 A14 = "http://schemas.microsoft.com/office/drawing/2010/main"
 
+# Cambria Math spacing accents, in the font's 2048-unit em. The PDF
+# may use a wider OpenType MATH variant with a different side bearing.
+# These nominal metrics also work on conversion hosts without Office fonts.
+SPACING_ACCENTS = {
+    "\u0302": ("\u02c6", 6, -1442, 578, -1070, 583),
+    "\u0303": ("\u02dc", -38, -1366, 624, -1128, 583),
+}
+VISIO_MATH_ASCENT = 0.75  # Top of a zero-inset Visio text block to the baseline, in em.
+VISIO_FONT_SCALE = "{http://schemas.microsoft.com/office/visio/2012/main}FontScale"
+
+
+def visio_accent(g):
+    """Fit editable spacing text to the embedded accent's ink in its local axes."""
+    metrics = SPACING_ACCENTS.get(g["s"])
+    if (
+        not metrics
+        or "ink_offsets" not in g
+        or "CambriaMath" not in g["font"].replace(" ", "")
+    ):
+        return g
+    char, left, top, right, bottom, advance = metrics
+    l, t, r, b = g["ink_offsets"]
+    if r <= l or b <= t:
+        return g
+    vertical = (b - t) / (bottom - top)
+    horizontal = (r - l) / (right - left)
+    # Visio limits character width to 600%. Preserve the center if clamped.
+    scale = min(horizontal / vertical, 6)
+    horizontal = vertical * scale
+    dx = (l + r - (left + right) * horizontal) / 2
+    dy = t - top * vertical
+    a = math.radians(g["angle"])
+    co, si = math.cos(a), math.sin(a)
+    return dict(
+        g, s=char, size=2048 * vertical, advance=advance * horizontal,
+        x=g["x"] + co * dx - si * dy,
+        y=g["y"] + si * dx + co * dy,
+        font_scale=scale,
+    )
+
 
 def elem(ns, name, parent=None):
     q = "{%s}%s" % (ns, name)

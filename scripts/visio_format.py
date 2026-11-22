@@ -1,6 +1,7 @@
 """Translate DrawingML formatting to native Visio shape and character cells."""
 
 import math
+from math_text import VISIO_FONT_SCALE
 from visio_geometry import cell, cells, el
 
 EMU = 914400
@@ -155,6 +156,8 @@ def text_block(shape, body, faces):
                 ColorTrans=tr,
                 Pos=pos,
             )
+            if rp.get(VISIO_FONT_SCALE) is not None:
+                args["FontScale"] = float(rp.get(VISIO_FONT_SCALE))
             key = tuple(args.values())
             if key not in styles:
                 idx = styles[key] = len(styles)

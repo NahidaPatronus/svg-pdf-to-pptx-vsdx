@@ -10,7 +10,7 @@ Turn an SVG or vector PDF into a diagram you can revise in PowerPoint (`.pptx`) 
 | --- | --- |
 | Recognized rectangles, rounded boxes, ellipses, braces and block arrows | Individual native shapes with editable dimensions and supported adjustments |
 | Lines and arrows | Native line ends. A straight arrow binds to nodes when both endpoints match unambiguously. |
-| Text and equations | Editable text. Recognized PDF math can become Office equations in PowerPoint; Visio preserves positioned text and scripts. |
+| Text and equations | Recognized PDF math becomes an editable Office equation in PowerPoint. In Visio, symbols and scripts remain editable text. Cambria Math hats and tildes follow the source glyph’s position and width. |
 | Irregular paths and embedded images | Editable vector paths with control points, and separate bitmap objects |
 
 Scanned pages remain images. Outlined letters remain paths. Complex clipping, unsupported SVG effects and missing fonts can affect fidelity. Use `--audit report.json` to inspect warnings.

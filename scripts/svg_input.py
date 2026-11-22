@@ -75,9 +75,10 @@ def image_data(node, folder):
 
 
 class SVGSlide:
-    def __init__(self, root, folder):
+    def __init__(self, root, folder, visio=False):
         self.root = root
         self.folder = folder
+        self.visio = visio
         self.ids = {
             el.get("id"): el
             for el in root.iter()
@@ -281,7 +282,7 @@ class SVGSlide:
             return [
                 self.record(sh, node, "text")
                 for sh in draw_text(
-                    self.slide, node, s, t, self.cascade, view, opacity, self.warnings
+                    self.slide, node, s, t, self.cascade, view, opacity, self.warnings, self.visio
                 )
             ]
         if kind == "image":
@@ -296,7 +297,7 @@ def svg_slide(deck, source, bind_edges, fit_pptx=True):
     ).getroot()
     if name(root) != "svg":
         raise ValueError("Expected an SVG root element")
-    page = SVGSlide(root, Path(source).parent)
+    page = SVGSlide(root, Path(source).parent, visio=not fit_pptx)
     w, h = page.width * 0.75, page.height * 0.75
     if min(w, h) <= 0:
         raise ValueError("SVG slide dimensions must be positive.")

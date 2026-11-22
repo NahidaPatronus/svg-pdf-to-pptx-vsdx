@@ -8,6 +8,7 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.util import Pt
 from labels import setup
+from math_text import VISIO_MATH_ASCENT
 from office_shapes import tag
 from svg_style import length, color, alpha
 
@@ -148,7 +149,7 @@ def chunks(root, style, cascade, view, warnings):
     return result
 
 
-def draw_text(slide, node, s, t, cascade, view, opacity, warnings):
+def draw_text(slide, node, s, t, cascade, view, opacity, warnings, visio=False):
     result = []
     sx = math.hypot(t.xx, t.xy)
     sy = math.hypot(t.yx, t.yy)
@@ -188,6 +189,10 @@ def draw_text(slide, node, s, t, cascade, view, opacity, warnings):
             "hanging": 0.2,
             "text-before-edge": 0,
         }.get(baseline, 1.0) * size
+        if visio and baseline in ("auto", "alphabetic") and all(
+            font_names(st)[0].replace(" ", "").lower() == "cambriamath" for _, st in runs
+        ):
+            offset = VISIO_MATH_ASCENT * size
         px, py = t.transformPoint((x, y))
         cx = px + co * (width / 2 - anchor_offset) - si * (h / 2 - offset)
         cy = py + si * (width / 2 - anchor_offset) + co * (h / 2 - offset)
