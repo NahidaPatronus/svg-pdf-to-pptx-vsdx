@@ -1,4 +1,4 @@
-"""ShapeSheet geometry shared by document masters and their instances (inches)."""
+"""Native ShapeSheet geometry for independent, resizable page shapes (inches)."""
 
 from lxml import etree as ET
 
@@ -42,22 +42,6 @@ def row(section, kind, index, **coords):
         else:
             cell(node, key, v)
     return node
-
-
-NAMES = {
-    "rect": "Rectangle",
-    "roundRect": "Rounded rectangle",
-    "ellipse": "Ellipse",
-    "diamond": "Diamond",
-    "triangle": "Triangle",
-    "rightArrow": "Block arrow",
-    "parallelogram": "Parallelogram",
-    "rightBrace": "Right brace",
-    "line": "Line",
-    "straightConnector1": "Straight connector",
-    "bentConnector2": "Elbow connector",
-    "bentConnector3": "Double elbow connector",
-}
 
 
 def ports(shape, w, h):

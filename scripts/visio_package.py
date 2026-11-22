@@ -1,10 +1,9 @@
 """Write the OPC parts of a standalone, macro-free Visio drawing."""
 
 import posixpath
-from uuid import NAMESPACE_URL, uuid5
 from zipfile import ZipFile, ZIP_DEFLATED
 from lxml import etree as ET
-from visio_geometry import NS, OFFICE, NAMES, el, cell, cells, preset
+from visio_geometry import NS, OFFICE, el, cell, cells
 
 REL = "http://schemas.openxmlformats.org/package/2006/relationships"
 CT = "http://schemas.openxmlformats.org/package/2006/content-types"
@@ -57,12 +56,10 @@ class Package:
         self.parts = {}
         self.types = {}
         self.rels = {}
-        self.masters = {}
         self.images = {}
         self.faces = set()
         self.pages = xmlroot("Pages")
         self.windows = xmlroot("Windows")
-        self.masterlist = xmlroot("Masters")
         self.link("", "visio/document.xml", "document")
         self.link("visio/document.xml", "visio/pages/pages.xml", "pages")
 
@@ -98,62 +95,6 @@ class Package:
         page_size(meta, w, h)
         reference(meta, self.link("visio/pages/pages.xml", path, "page"))
         return path, root
-
-    def master(self, kind, page):
-        idx = self.masters.get(kind, len(self.masters) + 1)
-        path = f"visio/masters/master{idx}.xml"
-        self.link(page, path, "master")
-        if kind in self.masters:
-            return idx
-        if not self.masters:
-            self.link("visio/document.xml", "visio/masters/masters.xml", "masters")
-        idx = self.masters[kind] = len(self.masters) + 1
-        name = NAMES[kind]
-
-        def guid(label):
-            return (
-                "{"
-                + str(
-                    uuid5(NAMESPACE_URL, "urn:editable-diagram:" + label + kind)
-                ).upper()
-                + "}"
-            )
-
-        master = el(
-            self.masterlist,
-            "Master",
-            ID=idx,
-            NameU=name,
-            Name=name,
-            MasterType=2,
-            BaseID=guid("base:"),
-            UniqueID=guid("master:"),
-            MatchByName=0,
-            IconSize=1,
-            PatternFlags=0,
-        )
-        page_size(master, 1, 1)
-        reference(master, self.link("visio/masters/masters.xml", path, "master"))
-        root = xmlroot("MasterContents")
-        s = el(
-            el(root, "Shapes"),
-            "Shape",
-            ID=1,
-            Type="Shape",
-            LineStyle=0,
-            FillStyle=0,
-            TextStyle=0,
-        )
-        linear = kind in ("straightConnector1", "line")
-        cells(s, PinX=0.5, PinY=0.5, Width=1, Height=0 if linear else 1)
-        cell(s, "LocPinX", 0.5, "Width/2")
-        cell(s, "LocPinY", 0 if linear else 0.5, "Height/2")
-        if linear:
-            cells(s, BeginX=0, BeginY=0.5, EndX=1, EndY=0.5)
-        preset(s, kind, 1, 0 if linear else 1, {})
-        ordered(s)
-        self.part(path, "master", root)
-        return idx
 
     def picture(self, s, page, blob, ext):
         path = self.images.get(blob)
@@ -242,8 +183,6 @@ class Package:
         self.part("visio/windows.xml", "windows", self.windows)
         self.part("visio/document.xml", "drawing.main", doc)
         self.part("visio/pages/pages.xml", "pages", self.pages)
-        if self.masters:
-            self.part("visio/masters/masters.xml", "masters", self.masterlist)
 
     def save(self, dest):
         self.document()

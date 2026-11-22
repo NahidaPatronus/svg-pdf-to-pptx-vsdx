@@ -5,7 +5,6 @@ import re
 from lxml import etree as ET
 from visio_format import EMU, appearance, text_block
 from visio_geometry import (
-    NAMES,
     cell,
     cells,
     el,
@@ -185,8 +184,6 @@ def render_shape(pkg, page, shape, parent, frame, warnings, glue):
 
         body = shape._element.find("{*}txBody")
         is_text = body is not None and body.find(".//{*}t") is not None
-        if not is_text and kind in NAMES:
-            s.set("Master", str(pkg.master(kind, page)))
         if kind in ("line", "straightConnector1", "bentConnector2", "bentConnector3"):
             a, b = physical(0, 0), physical(1, 1)
             edge_angle = None
