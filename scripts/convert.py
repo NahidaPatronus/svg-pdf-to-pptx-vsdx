@@ -1,4 +1,4 @@
-"""Local PDF -> editable PowerPoint. Usage: python convert.py input.pdf -o result.pptx"""
+"""Convert an SVG or vector PDF to an editable PowerPoint presentation."""
 
 import argparse
 from collections import Counter
@@ -190,14 +190,22 @@ def convert(source, dest, bind=True):
         raise ValueError("Choose a separate .pptx output path.")
     deck = Presentation()
     report = []
-    for index, page in enumerate(read_pages(source)):
-        size = Pt(page.width), Pt(page.height)
-        if index == 0:
-            deck.slide_width, deck.slide_height = size
-        elif size != (deck.slide_width, deck.slide_height):
-            raise ValueError("Mixed page sizes need separate decks.")
-        slide = deck.slides.add_slide(deck.slide_layouts[6])
-        report.append(process(slide, page, bind))
+    suffix = Path(source).suffix.lower()
+    if suffix == ".svg":
+        from svg_input import svg_slide
+
+        report.append(svg_slide(deck, source, connect if bind else None))
+    elif suffix == ".pdf":
+        for index, page in enumerate(read_pages(source)):
+            size = Pt(page.width), Pt(page.height)
+            if index == 0:
+                deck.slide_width, deck.slide_height = size
+            elif size != (deck.slide_width, deck.slide_height):
+                raise ValueError("Mixed page sizes need separate decks.")
+            slide = deck.slides.add_slide(deck.slide_layouts[6])
+            report.append(process(slide, page, bind))
+    else:
+        raise ValueError("Choose an .svg or .pdf source file.")
     if not report:
         raise ValueError("Empty PDF")
     dest = Path(dest)

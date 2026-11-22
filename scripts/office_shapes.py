@@ -11,6 +11,7 @@ TYPES = {
     "rect": ST.RECTANGLE,
     "roundRect": ST.ROUNDED_RECTANGLE,
     "ellipse": ST.OVAL,
+    "diamond": ST.DIAMOND,
     "rightBrace": ST.RIGHT_BRACE,
     "rightArrow": ST.RIGHT_ARROW,
     "triangle": ST.ISOSCELES_TRIANGLE,
@@ -77,18 +78,40 @@ def appearance(shape, style):
                 d=round(100000 * length / style["width"]),
                 sp=round(100000 * space / style["width"]),
             )
-    if style.get("end"):
-        tip, width, length = style["end"]
-        tag(line, "a:tailEnd", type=tip, w=width, len=length)
+    if style.get("cap"):
+        line.set("cap", style["cap"])
+    if style.get("join"):
+        tag(line, "a:" + style["join"])
+    for side, element in (("start", "a:headEnd"), ("end", "a:tailEnd")):
+        if style.get(side):
+            tip, width, length = style[side]
+            tag(line, element, type=tip, w=width, len=length)
 
 
-def add_path(slide, item):
+def add_path(slide, item, geom=None):
     cmds = item.data
-    geom = identify(cmds)
+    geom = geom or identify(cmds)
     x, y, w, h = geom.box
-    if geom.kind == "line":
+    if geom.kind in ("bentConnector2", "bentConnector3"):
+        shape = slide.shapes.add_connector(
+            MSO_CONNECTOR.ELBOW, Pt(x), Pt(y), Pt(x + w), Pt(y + h)
+        )
+        shape.rotation = geom.angle
+        properties = shape._element.spPr
+        properties.prstGeom.set("prst", geom.kind)
+        if geom.adjusts.get("flipV"):
+            properties.xfrm.set("flipV", "1")
+        adjustments = properties.prstGeom.find("{*}avLst")
+        if "adj1" in geom.adjusts:
+            tag(
+                adjustments,
+                "a:gd",
+                name="adj1",
+                fmla="val " + str(geom.adjusts["adj1"]),
+            )
+    elif geom.kind == "line":
         a, b = poly(cmds)
-        if item.style.get("end"):
+        if item.style.get("end") or item.style.get("start"):
             shape = slide.shapes.add_connector(
                 MSO_CONNECTOR.STRAIGHT, *[Pt(n) for n in (*a, *b)]
             )
