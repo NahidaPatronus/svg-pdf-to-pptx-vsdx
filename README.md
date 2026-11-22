@@ -17,7 +17,7 @@ Scanned pages remain images. Outlined letters remain paths. Complex clipping, un
 
 ## Install as an Agent Skill
 
-From your project directory, run the following for Codex, Antigravity or DeepSeek Harness. You need read access to this private repository. For Claude Code, use `.claude/skills` in both commands. DeepSeek Harness needs its filesystem skill provider enabled.
+From your project directory, run the following for Codex, Antigravity or DeepSeek Harness. For Claude Code, use `.claude/skills` in both commands. DeepSeek Harness needs its filesystem skill provider enabled.
 
 ```sh
 git clone https://github.com/NahidaPatronus/svg-pdf-to-pptx-vsdx.git .agents/skills/svg-pdf-to-pptx-vsdx
@@ -42,3 +42,7 @@ python scripts/convert.py figure.pdf -o figure.vsdx --audit report.json
 Existing work on editable SVG-to-PowerPoint export and programmatic Visio editing informed the design. This project adds recognition of diagram shapes from PDF contours, arrowhead matching, connector binding and a single conversion command for both editors. [svg2ooxml](https://github.com/BramAlkema/svg2ooxml) · [vsdx](https://github.com/dave-howard/vsdx)
 
 The implementation reads PDF drawing operations, glyphs and images with pdfminer.six and pypdf, builds PowerPoint objects with python-pptx, and writes Visio ShapeSheet geometry directly. In a desktop Visio open-and-save check on a scientific diagram, all **499 objects**, **200 text objects** and **14 glued connector endpoints** survived. [pdfminer.six](https://github.com/pdfminer/pdfminer.six) · [pypdf](https://github.com/py-pdf/pypdf) · [python-pptx](https://github.com/scanny/python-pptx)
+
+## License and attribution
+
+Project code and documentation are offered under CC BY 4.0 to the extent copyright or similar rights apply. When sharing them, credit `svg-pdf-to-pptx-vsdx`, link to the repository and license, and indicate any changes. Third-party packages retain their own licenses. [Project license](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md)
