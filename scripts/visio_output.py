@@ -1,6 +1,7 @@
 """Serialize the in-memory editable drawing to Visio, without Office or an intermediate file."""
 
 import math
+import re
 from lxml import etree as ET
 from visio_format import EMU, appearance, text_block
 from visio_geometry import (
@@ -120,12 +121,19 @@ def render_shape(pkg, page, shape, parent, frame, warnings, glue):
     angle = -math.radians(shape.rotation)
     fx = xf.get("flipH") in ("1", "true")
     fy = xf.get("flipV") in ("1", "true")
+    # Source labels can repeat or contain formula syntax. Keep sheet names
+    # unique independently of the editable text stored in the Text element.
+    label = re.sub(r"[^\w ]+", " ", shape.name or "Shape").strip()[:48] or "Shape"
+    sheet_name = f"{label}_{shape.shape_id}"
     s = el(
         parent,
         "Shape",
         ID=shape.shape_id,
         Type="Group" if group else "Foreign" if picture else "Shape",
-        Name=shape.name or f"Shape.{shape.shape_id}",
+        Name=sheet_name,
+        NameU=sheet_name,
+        IsCustomName=1,
+        IsCustomNameU=1,
         LineStyle=0,
         FillStyle=0,
         TextStyle=0,
